@@ -22,7 +22,6 @@ def write(event_string):
     log_file.close()
 
     os.remove("/home/tzur/final-client/elvis.json")
-#    open("/home/tzur/final-client/elvis.json", "w").close()
 
     doc_UUID = uuid.uuid4()
     resp = requests.put(url=f"http://13.81.211.207:9200/{event_string}/_doc/{doc_UUID}", json=log_json,
