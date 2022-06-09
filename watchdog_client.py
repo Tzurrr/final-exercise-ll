@@ -24,12 +24,12 @@ dir_path = "/home/tzur/all-the-photos"
 
 def process_queue(q):
     counter = 0
-    half_two_arr = []
-    half_one_arr = []
+    first_half_arr = []
+    second_half_arr = []
     while True:
         counter += 1
-        half_one_arr = remove_older.remove(half_one_arr)
-        half_two_arr = remove_older.remove(half_two_arr)
+        first_half_arr = remove_older.remove(first_half_arr)
+        second_half_arr = remove_older.remove(second_half_arr)
         if not q.empty():
             event = q.get()
             dot = dot_finder.find(event.src_path)
@@ -42,23 +42,23 @@ def process_queue(q):
             elif event.src_path[:dot][-1] == "a":
                 #print("first half")
                 r.set(f"{event.src_path[:dot - 2]}", event.src_path)
-                half_one_arr.append((event.src_path, datetime.datetime.utcnow()))
-#                if len(half_one_arr) > 0:
- #                   is_valid = verifier.verify(half_one_arr, half_two_arr)
+                first_half_arr.append((event.src_path, datetime.datetime.utcnow()))
+#                if len(first_half_arr) > 0:
+ #                   is_valid = verifier.verify(first_half_arr, second_half_arr)
   #                  if is_valid:
-   #                     sender.send(event.src_path, half_two_arr)
+   #                     sender.send(event.src_path, second_half_arr)
 
             elif event.src_path[:dot][-1] == "b":
                 #print("second half")
-                half_two_arr.append((event.src_path, datetime.datetime.utcnow()))
-                if len(half_one_arr) > 0:
-                    is_valid = verifier.verify(half_one_arr, half_two_arr)
+                second_half_arr.append((event.src_path, datetime.datetime.utcnow()))
+                if len(first_half_arr) > 0:
+                    is_valid = verifier.verify(first_half_arr, second_half_arr)
                     if is_valid:
                         sender.send(event.src_path)
 
 
 class FileWatchdog(PatternMatchingEventHandler):
-    def __init__(self, queue, patterns):
+    def __init__(self, queue):
         PatternMatchingEventHandler.__init__(self, patterns=["*"], ignore_patterns=None, ignore_directories=False, case_sensitive=True)
         self.queue = queue
 
@@ -77,12 +77,8 @@ if __name__ == "__main__":
         filename = os.path.join(dir_path, file)
         event = FileClosedEvent(filename)
         watchdog_queue.put(event)
-        
-    #with ProcessPoolExecutor() as executor:
-      #  a = executor.submit(process_queue(watchdog_queue), watchdog_queue)
-       # a.result()
 
-    event_handler = FileWatchdog(watchdog_queue, patterns="*.ini")
+    event_handler = FileWatchdog(watchdog_queue)
     observer = Observer()
     observer.schedule(event_handler, path=dir_path)
     observer.start()
@@ -97,5 +93,3 @@ if __name__ == "__main__":
     except KeyboardInterrupt:
         observer.stop()
         observer.join()
-
-
