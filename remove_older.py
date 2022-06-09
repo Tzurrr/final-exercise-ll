@@ -13,5 +13,4 @@ def remove(array: list):
                 os.remove(i[0])
             except Exception:
                 pass
-#                print(("expired", array))
     return array
