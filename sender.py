@@ -10,7 +10,7 @@ def send(filepath: str, *args):
     r = redis.Redis()
     dot = dot_finder.find(filepath)
     get_val = r.get(f"{filepath[:dot - 2]}")
-
+    
   #  if get_val == filepath:
 #        for i in args:
  #           print(i)
