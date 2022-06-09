@@ -3,7 +3,7 @@ import os
 import dot_finder
 
 
-def verify(half_one_arr, half_two_arr):
+def verify(half_one_arr: list, half_two_arr: list):
     for i in half_one_arr:
         dot = dot_finder.find(i[0])
         for j in half_two_arr:

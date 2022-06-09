@@ -16,6 +16,9 @@ import sender
 import verifier
 import dot_finder
 import elogger
+from concurrent.futures import ProcessPoolExecutor
+from concurrent.futures import as_completed
+
 
 dir_path = "/home/tzur/all-the-photos"
 
@@ -33,15 +36,20 @@ def process_queue(q):
             elogger.write("arrivedtoserver")
 
             if event.src_path[:dot][-1] != "a" and event.src_path[:dot][-1] != "b":
-                print("irrelevant")
+               # print("irrelevant")
                 os.remove(event.src_path)
 
             elif event.src_path[:dot][-1] == "a":
-                print("first half")
+                #print("first half")
                 r.set(f"{event.src_path[:dot - 2]}", event.src_path)
                 half_one_arr.append((event.src_path, datetime.datetime.utcnow()))
+#                if len(half_one_arr) > 0:
+ #                   is_valid = verifier.verify(half_one_arr, half_two_arr)
+  #                  if is_valid:
+   #                     sender.send(event.src_path, half_two_arr)
+
             elif event.src_path[:dot][-1] == "b":
-                print("second half")
+                #print("second half")
                 half_two_arr.append((event.src_path, datetime.datetime.utcnow()))
                 if len(half_one_arr) > 0:
                     is_valid = verifier.verify(half_one_arr, half_two_arr)
@@ -51,13 +59,12 @@ def process_queue(q):
 
 class FileWatchdog(PatternMatchingEventHandler):
     def __init__(self, queue, patterns):
-        PatternMatchingEventHandler.__init__(self, patterns=["*"], ignore_patterns=None, ignore_directories=False,
-                                             case_sensitive=True)
+        PatternMatchingEventHandler.__init__(self, patterns=["*"], ignore_patterns=None, ignore_directories=False, case_sensitive=True)
         self.queue = queue
 
     def process(self, event):
         self.queue.put(event)
-        print(("a", event.event_type))
+#        print(("a", event.event_type))
 
     def on_closed(self, event):
         self.process(event)
@@ -70,19 +77,25 @@ if __name__ == "__main__":
         filename = os.path.join(dir_path, file)
         event = FileClosedEvent(filename)
         watchdog_queue.put(event)
+        
+    #with ProcessPoolExecutor() as executor:
+      #  a = executor.submit(process_queue(watchdog_queue), watchdog_queue)
+       # a.result()
 
-    worker = Thread(target=process_queue, args=(watchdog_queue,), daemon=True)
-    worker.start()
-    event_handler1 = FileWatchdog(watchdog_queue, patterns="*.ini")
-    observer1 = Observer()
-    observer1.schedule(event_handler1, path=dir_path)
-    observer1.start()
+    event_handler = FileWatchdog(watchdog_queue, patterns="*.ini")
+    observer = Observer()
+    observer.schedule(event_handler, path=dir_path)
+    observer.start()
     try:
-        while (True):
-            time.sleep(1)
+   #     while (True):
+        with ProcessPoolExecutor() as executor:
+            a = executor.submit(process_queue(watchdog_queue), watchdog_queue)
+            a.result()
+
+    #        time.sleep(10)
 
     except KeyboardInterrupt:
-        observer1.stop()
-        observer1.join()
+        observer.stop()
+        observer.join()
 
 

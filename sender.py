@@ -6,10 +6,16 @@ import elogger
 import time
 import urllib
 
-def send(filepath):
+def send(filepath: str, *args):
     r = redis.Redis()
     dot = dot_finder.find(filepath)
     get_val = r.get(f"{filepath[:dot - 2]}")
+
+  #  if get_val == filepath:
+#        for i in args:
+ #           print(i)
+        #    if i[0][:dot] == filepath[:dot-1] +"b":
+         #       get_val = i[0]
 
     arr = [("files", open(get_val, "rb")), ("files", open(filepath, "rb"))]
     resp = requests.post(url="http://127.0.0.1:80/", files=arr)
